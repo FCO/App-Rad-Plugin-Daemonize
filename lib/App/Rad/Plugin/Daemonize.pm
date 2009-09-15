@@ -42,8 +42,8 @@ sub daemonize {
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
                               Carp::croak "Daemon $0 is already running" if $c->is_running;
-                              print "Starting $0: OK$/";
-                              $c->detach unless $pars{no_detach};
+                              my $daemon_pid = $c->detach unless $pars{no_detach};
+                              print "Starting $0 (pid: $daemon_pid): OK$/";
                               $c->write_pidfile($pars{pid_file});
                               $c->change_procname($pars{proc_name}) if $c->check_root;
                               $c->chroot($pars{chroot_dir}) if $c->check_root;
@@ -70,7 +70,7 @@ sub detach {
 
    close(STDIN);
    POSIX::setsid || Carp::croak "Can't start a new session: $!";
-   1
+   $$
 }
 
 sub chroot {
