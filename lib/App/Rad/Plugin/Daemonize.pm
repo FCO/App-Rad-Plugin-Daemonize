@@ -90,9 +90,7 @@ sub detach {
                              qq{$^X},
                              "perl $0 Win32_Daemon "
                                 . (
-                                   join " ",
-                                      map {"--$_=".$c->options->{$_}} keys %{ $c->options },
-                                      @{ $c->argv }
+                                   join " ", @ARGV
                                   ),
                              0,
                              Win32::Process->DETACHED_PROCESS,
