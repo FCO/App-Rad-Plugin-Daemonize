@@ -7,6 +7,14 @@ sub daemonize {
    my $c    = shift;
    my $func = shift;
    my %pars = @_;
+   $c->register("Win32_Daemon", sub {
+                                     $c->write_pidfile($pars{pid_file});
+                                     $c->change_procname($pars{proc_name}) if $c->check_root;
+                                     $c->chroot($pars{chroot_dir}) if $c->check_root;
+                                     $c->change_user($pars{user}) if exists $pars{user};
+                                     $c->signal_handlers($pars{signal_handlers});
+                                     $func->($c);
+                                    }) if $^O eq "MSWin32";
    $c->register("stop"   , sub{
                               my $c = shift;
                               Carp::croak "You are not root" 
@@ -44,33 +52,54 @@ sub daemonize {
                               Carp::croak "Daemon $0 is already running" if $c->is_running;
                               my $daemon_pid = $c->detach unless $pars{no_detach};
                               print "Starting $0 (pid: $daemon_pid): OK$/";
-                              $c->write_pidfile($pars{pid_file});
-                              $c->change_procname($pars{proc_name}) if $c->check_root;
-                              $c->chroot($pars{chroot_dir}) if $c->check_root;
-                              $c->change_user($pars{user}) if exists $pars{user};
-                              $c->signal_handlers($pars{signal_handlers});
-                              $func->($c);
+                              if($^O ne "MSWin36") {
+                                 $c->write_pidfile($pars{pid_file});
+                                 $c->change_procname($pars{proc_name}) if $c->check_root;
+                                 $c->chroot($pars{chroot_dir}) if $c->check_root;
+                                 $c->change_user($pars{user}) if exists $pars{user};
+                                 $c->signal_handlers($pars{signal_handlers});
+                                 $func->($c);
+                              }
                            });
 }
 
 sub detach {
    my $c = shift;
 
-   umask(0);
-   $SIG{'HUP'} = 'IGNORE';
-   my $child = fork();
+   if($^O ne "MSWin32"){
+      umask(0);
+      $SIG{'HUP'} = 'IGNORE';
+      my $child = fork();
 
-   if($child < 0) {
-       Carp::croak "Fork failed ($!)";
+      if($child < 0) {
+          Carp::croak "Fork failed ($!)";
+      }
+
+      if( $child ) {
+          exit 0;
+      }
+
+      close(STDIN);
+      POSIX::setsid || Carp::croak "Can't start a new session: $!";
+      return $$
+   } else {
+      require Win32::Process;
+      my $proc;
+      Win32::Process::Create(
+                             $proc,
+                             qq{$^X},
+                             "perl $0 Win32_Daemon "
+                                . (
+                                   join " ",
+                                      map {"--$_=".$c->options->{$_}} keys %{ $c->options },
+                                      @{ $c->argv }
+                                  ),
+                             0,
+                             Win32::Process->DETACHED_PROCESS,
+                             ".",
+                            );
+      return $proc->GetProcessID
    }
-
-   if( $child ) {
-       exit 0;
-   }
-
-   close(STDIN);
-   POSIX::setsid || Carp::croak "Can't start a new session: $!";
-   $$
 }
 
 sub chroot {
