@@ -43,7 +43,7 @@ sub daemonize {
                                  my %options = %{ $c->options };
                                  for my $opt (keys %options) {
                                     next if exists $pars{$opt};
-                                    $pars{$opt} = $options{$pot};
+                                    $pars{$opt} = $options{$opt};
                                  }
                               }
                               Carp::croak "You are not root" 
