@@ -3,28 +3,58 @@ use POSIX      ();
 use File::Temp ();
 use Carp       ();
 
+sub after_detach {
+   my $c    = shift;
+   my %pars = @_;
+   my %pars = $c->get_daemonize_pars;
+
+   $c->write_pidfile($pars{pid_file});
+   $c->change_procname($pars{proc_name}) if $c->check_root;
+   $c->chroot($pars{chroot_dir}) if $c->check_root;
+   $c->change_user($pars{user}) if exists $pars{user};
+   $c->signal_handlers($pars{signal_handlers});
+}
+
+sub set_daemonize_pars {
+   my $c = shift;
+   $c->stash->{daemonize_pars} = {@_};
+}
+sub get_daemonize_pars {
+   my $c    = shift;
+   my %pars = %{ $c->stash->{daemonize_pars} };
+   if(exists $pars{dont_use_options} and not $pars{dont_use_options}) {
+      my %options = %{ $c->options };
+      for my $opt (keys %options) {
+         next if exists $pars{$opt};
+         $pars{$opt} = $options{$opt};
+      }
+   }
+   %pars;
+}
+
 sub daemonize {
    my $c    = shift;
    my $func = shift;
    my %pars = @_;
+   $c->set_daemonize_pars(%pars);
    $c->register("Win32_Daemon", sub {
-                                     $c->write_pidfile($pars{pid_file});
-                                     $c->change_procname($pars{proc_name}) if $c->check_root;
-                                     $c->chroot($pars{chroot_dir}) if $c->check_root;
-                                     $c->change_user($pars{user}) if exists $pars{user};
-                                     $c->signal_handlers($pars{signal_handlers});
+                                     my $c = shift;
+                                     my %pars = $c->get_daemonize_pars;
+                                     $c->after_detach(%pars);
                                      $func->($c);
                                     }) if $^O eq "MSWin32";
    $c->register("stop"   , sub{
                               my $c = shift;
+                              my %pars = $c->get_daemonize_pars;
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
-                              Carp::croak "Daemon $0 is not running" unless $c->is_running;
+                              Carp::croak "Daemon $0 is not running" unless $c->is_running($pars{pid_file});
                               "Stopping $0: " . ($c->stop ? "OK" : "NOK")
                            });
    $c->register("restart", sub{
                               my $c = shift;
+                              my %pars = $c->get_daemonize_pars;
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
@@ -32,32 +62,23 @@ sub daemonize {
                            });
    $c->register("status" , sub{
                               my $c = shift;
+                              my %pars = $c->get_daemonize_pars;
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
-                              $c->is_running ? "$0 Daemon is running" : "$0 Daemon is not running"
+                              $c->is_running($pars{pid_file}) ? "$0 Daemon is running" : "$0 Daemon is not running"
                            });
    $c->register("start"  , sub{
                               my $c = shift;
-                              if(exists $pars{dont_use_options} and not $pars{dont_use_options}) {
-                                 my %options = %{ $c->options };
-                                 for my $opt (keys %options) {
-                                    next if exists $pars{$opt};
-                                    $pars{$opt} = $options{$opt};
-                                 }
-                              }
+                              my %pars = $c->get_daemonize_pars;
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
-                              Carp::croak "Daemon $0 is already running" if $c->is_running;
+                              Carp::croak "Daemon $0 is already running" if $c->is_running($pars{pid_file});
                               my $daemon_pid = $c->detach unless $pars{no_detach};
                               print "Starting $0 (pid: $daemon_pid): OK$/";
                               if($^O ne "MSWin36") {
-                                 $c->write_pidfile($pars{pid_file});
-                                 $c->change_procname($pars{proc_name}) if $c->check_root;
-                                 $c->chroot($pars{chroot_dir}) if $c->check_root;
-                                 $c->change_user($pars{user}) if exists $pars{user};
-                                 $c->signal_handlers($pars{signal_handlers});
+                                 $c->after_detach(%pars);
                                  $func->($c);
                               }
                            });
@@ -133,15 +154,15 @@ sub write_pidfile {
    my $c    = shift;
    my $file = shift;
 
-   if(not defined $file and not exists $c->stash->{pidfile}) {
+   if(not defined $file and not exists $c->stash->{pid_file}) {
       ($file = $0) =~ s{^.*/}{};
       $file =~ s/\./_/g;
       $file = ".$file.pid";
       $file = $c->path . "/$file";
    } elsif (not defined $file) {
-      $file = $c->stash->{pidfile};
+      $file = $c->stash->{pid_file};
    }
-   $c->stash->{pidfile} = $file;
+   $c->stash->{pid_file} = $file;
    open my $PIDFILE, ">", $file;
    my $ret = print {$PIDFILE} $$, $/;
    close $PIDFILE;
@@ -160,15 +181,15 @@ sub read_pidfile {
    my $c    = shift;
    my $file = shift;
 
-   if(not defined $file and not exists $c->stash->{pidfile}) {
+   if(not defined $file and not exists $c->stash->{pid_file}) {
       ($file = $0) =~ s{^.*/}{};
       $file =~ s/\./_/g;
       $file = ".$file.pid";
       $file = $c->path . "/$file";
    } elsif (not defined $file) {
-      $file = $c->stash->{pidfile};
+      $file = $c->stash->{pid_file};
    }
-   $c->stash->{pidfile} = $file;
+   $c->stash->{pid_file} = $file;
    return unless -f $file;
    open my $PIDFILE, "<", $file;
    my $ret = scalar <$PIDFILE>;
