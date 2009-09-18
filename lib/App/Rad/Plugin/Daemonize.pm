@@ -13,6 +13,16 @@ sub after_detach {
    $c->chroot($pars{chroot_dir}) if $c->check_root;
    $c->change_user($pars{user}) if exists $pars{user};
    $c->signal_handlers($pars{signal_handlers});
+   if(exists $pars{stdout_logfile}) {
+      open STDOUT, '>>', $pars{stdout_logfile};
+   } else {
+      close STDOUT;
+   }
+   if(exists $pars{stderr_logfile}) {
+      open STDERR, '>>', $pars{stderr_logfile};
+   } else {
+      close STDERR;
+   }
 }
 
 sub set_daemonize_pars {
