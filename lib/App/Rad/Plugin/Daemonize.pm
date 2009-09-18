@@ -211,7 +211,14 @@ sub stop {
    my $c    = shift;
    my $file = shift;
 
-   $c->kill(15, $file);
+   my $ret;
+   if($^O ne "MSWin32") {
+      $ret = $c->kill(15, $file);
+   } else {
+      require Win32::Process;
+      $ret = Win32::Process::KillProcess($c->read_pidfile($file), 0);
+   }
+   $ret
 }
 
 sub kill {
@@ -228,7 +235,14 @@ sub is_running {
    my $c    = shift;
    my $file = shift;
 
-   $c->kill(0, $file);
+   my $ret;
+   if($^O ne "MSWin32") {
+      $ret = $c->kill(0, $file);
+   } else {
+      require Win32::Process;
+      $ret = Win32::Process::Open(undef, $c->read_pidfile($file));
+   }
+   $ret
 }
 
 sub signal_handlers {
