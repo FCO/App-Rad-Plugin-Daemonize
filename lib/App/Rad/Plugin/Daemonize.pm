@@ -240,7 +240,7 @@ sub is_running {
       $ret = $c->kill(0, $file);
    } else {
       require Win32::Process;
-      $ret = Win32::Process::Open(undef, $c->read_pidfile($file));
+      $ret = Win32::Process::Open(my $obj, $c->read_pidfile($file), my $flags);
    }
    $ret
 }
