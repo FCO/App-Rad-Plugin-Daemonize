@@ -10,7 +10,7 @@ sub after_detach {
 
    $c->write_pidfile($pars{pid_file});
    $c->change_procname($pars{proc_name}) if $c->check_root;
-   $c->chroot($pars{chroot_dir}) if $c->check_root;
+   $c->chroot($pars{chroot_dir}) if $^O ne "MSWin32" and $c->check_root; # TODO: Make it work on windows
    $c->change_user($pars{user}) if exists $pars{user};
    $c->signal_handlers($pars{signal_handlers});
    if(exists $pars{stdout_logfile}) {
