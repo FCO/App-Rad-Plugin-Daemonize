@@ -12,7 +12,10 @@ WriteMakefile(
       : ()),
     PL_FILES            => {},
     PREREQ_PM => {
-        'Test::More' => 0,
+        'Test::More'       => 0,
+        'App::Rad'         => '1.04',
+        'File::Temp'       => 0,
+        'App::Rad::Tester' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'App-Rad-Plugin-Daemonize-*' },
