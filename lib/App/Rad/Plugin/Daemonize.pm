@@ -92,6 +92,7 @@ sub daemonize {
                                  $func->($c);
                               }
                            });
+   1
 }
 
 sub detach {
