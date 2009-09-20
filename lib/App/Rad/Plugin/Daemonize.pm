@@ -32,7 +32,7 @@ sub set_daemonize_pars {
 sub get_daemonize_pars {
    my $c    = shift;
    my %pars = %{ $c->stash->{daemonize_pars} };
-   if(exists $pars{dont_use_options} and not $pars{dont_use_options}) {
+   if(exists $pars{use_cmd_args} and not $pars{use_cmd_args}) {
       my %options = %{ $c->options };
       for my $opt (keys %options) {
          next if exists $pars{$opt};
@@ -161,26 +161,6 @@ sub check_root {
    $< == 0;
 }
 
-sub write_pidfile {
-   my $c    = shift;
-   my $file = shift;
-
-   if(not defined $file and not exists $c->stash->{pid_file}) {
-      ($file = $0) =~ s{^.*/}{};
-      $file =~ s/\./_/g;
-      $file = ".$file.pid";
-      $file = $c->path . "/$file";
-   } elsif (not defined $file) {
-      $file = $c->stash->{pid_file};
-   }
-   $c->stash->{pid_file} = $file;
-   open my $PIDFILE, ">", $file;
-   my $ret = print {$PIDFILE} $$, $/;
-   close $PIDFILE;
-   return unless -f $file;
-   $ret
-}
-
 sub change_procname {
    my $c    = shift;
    my $name = shift;
@@ -188,19 +168,44 @@ sub change_procname {
    $0 = $name;
 }
 
-sub read_pidfile {
-   my $c    = shift;
-   my $file = shift;
-
-   if(not defined $file and not exists $c->stash->{pid_file}) {
+sub get_pidfile_name {
+   my $c = shift;
+   my $file;
+   if(not exists $c->stash->{pid_file}) {
       ($file = $0) =~ s{^.*/}{};
       $file =~ s/\./_/g;
       $file = ".$file.pid";
       $file = $c->path . "/$file";
-   } elsif (not defined $file) {
+   } else {
       $file = $c->stash->{pid_file};
    }
-   $c->stash->{pid_file} = $file;
+   $file
+}
+
+sub set_pidfile_name {
+   my $c    = shift;
+   my $file = shift;
+   $c->stash->{pid_file} = $file if defined $file;
+}
+
+sub write_pidfile {
+   my $c    = shift;
+   my $file = shift;
+
+   $c->set_pidfile_name($file);
+   $file = $c->get_pidfile_name;
+   open my $PIDFILE, ">", $file;
+   my $ret = print {$PIDFILE} $$, $/;
+   close $PIDFILE;
+   return unless -f $file;
+   $ret
+}
+
+sub read_pidfile {
+   my $c    = shift;
+   my $file = shift;
+   $c->set_pidfile_name($file);
+   $file = $c->get_pidfile_name;
    return unless -f $file;
    open my $PIDFILE, "<", $file;
    my $ret = scalar <$PIDFILE>;
