@@ -32,7 +32,7 @@ sub set_daemonize_pars {
 sub get_daemonize_pars {
    my $c    = shift;
    my %pars = %{ $c->stash->{daemonize_pars} };
-   if(exists $pars{use_cmd_args} and not $pars{use_cmd_args}) {
+   if(exists $pars{use_cmd_args} and $pars{use_cmd_args}) {
       my %options = %{ $c->options };
       for my $opt (keys %options) {
          next if exists $pars{$opt};
