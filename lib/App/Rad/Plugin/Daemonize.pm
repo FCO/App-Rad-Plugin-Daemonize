@@ -3,6 +3,61 @@ use POSIX      ();
 use File::Temp ();
 use Carp       ();
 
+########## POD Begin ###################
+
+=head1 NAME
+App::Rad::Plugin::Daemonize
+
+It's just an awesome plugin for Rad, that allows you to turn your Rad applications into daemons!! No more need of cron!
+
+=head1 VERSION
+current version here
+
+=cut
+
+our $VERSION = '0.1.5';
+
+
+=head1 SYNOPSIS
+
+If you reached here you probably know Rad, but if  you don't, please take a quick look on App::Rad, it is the basis for this plugin, that helps you
+to make daemons very quickly.
+
+Let us show you the first test daemon :
+
+###################VERBATIM
+
+#!/usr/bin/perl
+use App::Rad qw/Daemonize/;
+App::Rad->run;
+
+sub setup {
+   my $c = shift;
+   $c->daemonize(\&test, dont_use_options => 0, stderr_logfile => "./test_err.log", stdout_logfile => "./test_out.log")
+}
+sub test {
+   while(sleep 1){
+      print "OUT: ", $count++, $/;
+      print { STDERR } "ERR: ", $count, $/;
+      warn "WARN: ", $count++, $/;
+   }
+}
+
+#################/VERBATIM
+
+That's it!! We have our first example
+
+As you see, you have to care with the infinite repetition structure on your sub, it's just write the sub and daemonize it.
+
+=head1 Configuring your daemon 
+
+Here will be described the options you can change on your daemon, like PID file, and log files. 
+
+You also can choose to configure it on the command line, like : #./mydaemon start --option1="value" Or you can configure inside your program.
+The second one is recommended if suits best for you
+
+## continue on the next push
+
 sub after_detach {
    my $c    = shift;
    my %pars = @_;
