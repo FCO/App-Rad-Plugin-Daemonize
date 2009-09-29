@@ -164,7 +164,7 @@ sub check_root {
 sub change_procname {
    my $c    = shift;
    my $name = shift;
-   ($name = $0) =~ s{^.*/}{};
+   ($name = $0) =~ s{^.*/}{} unless defined $name;
    $0 = $name;
 }
 
