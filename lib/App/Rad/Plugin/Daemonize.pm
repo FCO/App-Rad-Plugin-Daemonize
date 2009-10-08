@@ -146,7 +146,7 @@ sub daemonize {
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
-                              Carp::croak "Daemon $0 is not running" unless $c->is_running($pars{pid_file});
+                              Carp::croak "$0 is not running" unless $c->is_running($pars{pid_file});
                               "Stopping $0: " . ($c->stop ? "OK" : "failed")
                            });
    $c->register("restart", sub{
@@ -163,7 +163,7 @@ sub daemonize {
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
-                              $c->is_running($pars{pid_file}) ? "$0 Daemon is running" : "$0 Daemon is not running"
+                              $c->is_running($pars{pid_file}) ? "$0 is running" : "$0 is not running"
                            });
    $c->register("start"  , sub{
                               my $c = shift;
@@ -171,7 +171,7 @@ sub daemonize {
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
-                              Carp::croak "Daemon $0 is already running" if $c->is_running($pars{pid_file});
+                              Carp::croak "$0 is already running" if $c->is_running($pars{pid_file});
                               my $daemon_pid = $c->detach unless $pars{no_detach};
                               print "Starting $0 (pid: $daemon_pid): OK$/";
                               if($^O ne "MSWin36") {
