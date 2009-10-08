@@ -31,7 +31,7 @@ Let us show you the first test daemon :
 
 	sub setup {
 	   my $c = shift;
-	   $c->daemonize(\&test, dont_use_options => 0, stderr_logfile => "./test_err.log", stdout_logfile => "./test_out.log")
+	   $c->daemonize(\&test, use_cmd_args => 1, stderr_logfile => "./test_err.log", stdout_logfile => "./test_out.log")
 	}
 	sub test {
 	   while(sleep 1){
@@ -56,14 +56,14 @@ The second one is recommended if suits best for you. Now you will learn to pass 
 
 Let us take the first deamon example setup (the only line that matters is the $c->daemonize, so let's analyze it):
 
-$c->daemonize(\&test, dont_use_options => 0, stderr_logfile => "./test_err.log", stdout_logfile => "./test_out.log")
+$c->daemonize(\&test, use_cmd_args => 1, stderr_logfile => "./test_err.log", stdout_logfile => "./test_out.log")
 
  * First parameter -> Reference to the sub you want to daemonize. Remember that you have to care about the infinite repetition of the sub on your code.
 All your daemon's code should be there.
 
  * The rest of the parameters will be listed here one by one, as you can use them in any order, as they're keys/values of a hash
 
-  - dont_use_options - This sub isnt here, so i dont remember <revise before CPAN> it sets how your parameters will be set, on the daemonize method directly or on the command line (ex: $./mydaemon.pl start --pid_file="/tmp/mydaemon.pid") : If set to zero, it will listen to the method's parameters, if set to one, command-line parameters
+  - dont_use_options - This sub isnt here, so i dont remember <revise before CPAN> it sets how your parameters will be set, on the daemonize method directly or on the command line (ex: $./mydaemon.pl start --pid_file="/tmp/mydaemon.pid") : If set to true, it will listen to the method's parameters, if set to one, command-line parameters
 
   - pid_file - where will be located the file containing the PID of the running daemon.
 
@@ -147,7 +147,7 @@ sub daemonize {
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
                               Carp::croak "Daemon $0 is not running" unless $c->is_running($pars{pid_file});
-                              "Stopping $0: " . ($c->stop ? "OK" : "NOK")
+                              "Stopping $0: " . ($c->stop ? "OK" : "failed")
                            });
    $c->register("restart", sub{
                               my $c = shift;
