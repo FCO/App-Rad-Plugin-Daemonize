@@ -3,6 +3,93 @@ use POSIX      ();
 use File::Temp ();
 use Carp       ();
 
+########## POD Begin ###################
+
+=head1 NAME
+App::Rad::Plugin::Daemonize
+
+It's just an awesome plugin for Rad, that allows you to turn your Rad applications into daemons!! No more need of cron!
+
+=head1 VERSION
+current version here
+
+=cut
+
+our $VERSION = '0.1.5';
+
+
+=head1 SYNOPSIS
+
+If you reached here you probably know Rad, but if  you don't, please take a quick look on App::Rad, it is the basis for this plugin, that helps you
+to make daemons very quickly.
+
+Let us show you the first test daemon :
+
+	#!/usr/bin/perl
+	use App::Rad qw/Daemonize/;
+	App::Rad->run;
+
+	sub setup {
+	   my $c = shift;
+	   $c->daemonize(\&test, dont_use_options => 0, stderr_logfile => "./test_err.log", stdout_logfile => "./test_out.log")
+	}
+	sub test {
+	   while(sleep 1){
+	      print "OUT: ", $count++, $/;
+	      print { STDERR } "ERR: ", $count, $/;
+	      warn "WARN: ", $count++, $/;
+	   }
+	}
+
+That's it!! We have our first example
+
+As you see, you have to care with the infinite repetition structure on your sub, it's just write the sub and daemonize it.
+
+=head1 Configuring your daemon 
+
+Here will be described the options you can change on your daemon, like PID file, and log files. 
+
+You also can choose to configure it on the command line, like : #./mydaemon start --option1="value" Or you can configure inside your program.
+The second one is recommended if suits best for you. Now you will learn to pass some parameters to your daemon, note that if you don't set them they will assume the standard value (files on the same dir of the binary) and user root :
+
+=head2 Setup built in the code
+
+Let us take the first deamon example setup (the only line that matters is the $c->daemonize, so let's analyze it):
+
+$c->daemonize(\&test, dont_use_options => 0, stderr_logfile => "./test_err.log", stdout_logfile => "./test_out.log")
+
+ * First parameter -> Reference to the sub you want to daemonize. Remember that you have to care about the infinite repetition of the sub on your code.
+All your daemon's code should be there.
+
+ * The rest of the parameters will be listed here one by one, as you can use them in any order, as they're keys/values of a hash
+
+  - dont_use_options - This sub isnt here, so i dont remember <revise before CPAN> it sets how your parameters will be set, on the daemonize method directly or on the command line (ex: $./mydaemon.pl start --pid_file="/tmp/mydaemon.pid") : If set to zero, it will listen to the method's parameters, if set to one, command-line parameters
+
+  - pid_file - where will be located the file containing the PID of the running daemon.
+
+	WARNING! If you want to do a coherent logging system for your daemon read carefully these two paremeters :
+
+  - stdout_logfile - Obviously sets where it will be > all that would be printed on the STDOUT of your daemon goes to that file
+
+  - stderr_logfile - Analog to stdout_logfile but for STDERR, you're free to put both together on the same file.
+
+  - proc_name - Yes! We thought about you doing a `ps aux | grep mydaemon` and getting the whole ugly command line you gave, so this sets the name of the running daemon, for example, just "mydaemon" (yes, you will see it on ps aux, and just that)
+
+  - user - The user that will run your daemon; If you care about security you will want to avoid exploits that run as root, so setting this you set the user that will own the running process
+
+=head2 Setup on the command-line
+
+This is more simpler than the before, and will be useful if you wanna do something that the user won't need to open the source files to configure your daemon.
+
+The options are the same as the listed above. Just that you have to specify as command-line options :
+
+	#./mydaemon.pl start --pid_file="/tmp/mydaemon.pid" --user="foo" --proc_name="mydaemon"
+
+## continue on the next push
+
+
+=cut
+
 sub after_detach {
    my $c    = shift;
    my %pars = @_;
@@ -14,7 +101,7 @@ sub after_detach {
    $c->change_user($pars{user}) if exists $pars{user};
    $c->signal_handlers($pars{signal_handlers});
    if(exists $pars{stdout_logfile}) {
-      open STDOUT, '>>', $pars{stdout_logfile};
+     open STDOUT, '>>', $pars{stdout_logfile};
    } else {
       close STDOUT;
    }
