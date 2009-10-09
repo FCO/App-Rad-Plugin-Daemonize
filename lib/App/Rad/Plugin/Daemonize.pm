@@ -63,7 +63,7 @@ All your daemon's code should be there.
 
  * The rest of the parameters will be listed here one by one, as you can use them in any order, as they're keys/values of a hash
 
-  - dont_use_options - This sub isnt here, so i dont remember <revise before CPAN> it sets how your parameters will be set, on the daemonize method directly or on the command line (ex: $./mydaemon.pl start --pid_file="/tmp/mydaemon.pid") : If set to true, it will listen to the method's parameters, if set to one, command-line parameters
+  - use_cmd_args - This sub isnt here, so i dont remember <revise before CPAN> it sets how your parameters will be set, on the daemonize method directly or on the command line (ex: $./mydaemon.pl start --pid_file="/tmp/mydaemon.pid") : If set to true, it will listen to the method's parameters, if set to one, command-line parameters
 
   - pid_file - where will be located the file containing the PID of the running daemon.
 
