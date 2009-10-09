@@ -147,7 +147,7 @@ sub daemonize {
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
                               Carp::croak "$0 is not running" unless $c->is_running($pars{pid_file});
-                              "Stopping $0: " . ($c->stop ? "OK" : "failed")
+                              "Stopping $0 (" . $c->read_pidfile . "): " . ($c->stop ? "OK" : "failed")
                            });
    $c->register("restart", sub{
                               my $c = shift;
@@ -175,7 +175,7 @@ sub daemonize {
                               Carp::croak "$0 is already running (PID: " . $c->read_pidfile . ")"
                                  if $c->is_running($pars{pid_file});
                               my $daemon_pid = $c->detach unless $pars{no_detach};
-                              print "Starting $0 (pid: $daemon_pid): OK$/";
+                              print "Starting $0 (PID: $daemon_pid): OK$/";
                               if($^O ne "MSWin36") {
                                  $c->after_detach(%pars);
                                  $func->($c);
