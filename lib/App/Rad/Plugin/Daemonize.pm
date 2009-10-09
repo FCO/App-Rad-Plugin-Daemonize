@@ -92,7 +92,7 @@ The options are the same as the listed above. Just that you have to specify as c
 
 sub after_detach {
    my $c    = shift;
-   my %pars = @_;
+   #my %pars = @_;
    my %pars = $c->get_daemonize_pars;
 
    $c->write_pidfile($pars{pid_file});
@@ -163,7 +163,8 @@ sub daemonize {
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
-                              $c->is_running($pars{pid_file}) ? "$0 is running" : "$0 is not running"
+                              $c->is_running($pars{pid_file}) ? "$0 is running (PID: "
+                                . $c->read_pidfile . ")" : "$0 is not running"
                            });
    $c->register("start"  , sub{
                               my $c = shift;
@@ -171,7 +172,8 @@ sub daemonize {
                               Carp::croak "You are not root" 
                                  if ($pars{check_root} and exists $pars{check_root})
                                     and not $c->check_root;
-                              Carp::croak "$0 is already running" if $c->is_running($pars{pid_file});
+                              Carp::croak "$0 is already running (PID: " . $c->read_pidfile . ")"
+                                 if $c->is_running($pars{pid_file});
                               my $daemon_pid = $c->detach unless $pars{no_detach};
                               print "Starting $0 (pid: $daemon_pid): OK$/";
                               if($^O ne "MSWin36") {
