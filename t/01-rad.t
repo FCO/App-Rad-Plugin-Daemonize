@@ -9,6 +9,7 @@ BEGIN {
 can_ok('App::Rad', 'run');
 
 
+# why not $c = App::Rad->new(); ??
 my $c = {};
 bless $c, 'App::Rad';
 $c->_init();
