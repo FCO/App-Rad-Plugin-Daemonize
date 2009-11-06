@@ -8,7 +8,9 @@ use Carp       ();
 =head1 NAME
 App::Rad::Plugin::Daemonize
 
-It's just an awesome plugin for Rad, that allows you to turn your Rad applications into daemons!! No more need of cron!
+It's just an awesome plugin for Rad, that allows you to turn your Rad applications into daemons! 
+
+start | stop | restart your Rad Application!
 
 =head1 VERSION
 current version here
@@ -22,6 +24,8 @@ our $VERSION = '0.1.5';
 
 If you reached here you probably know Rad, but if  you don't, please take a quick look on App::Rad, it is the basis for this plugin, that helps you
 to make daemons very quickly.
+
+# TODO : get the example simpler than that (not passing configuration parameters and with sample code more simple 
 
 Let us show you the first test daemon :
 
