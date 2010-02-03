@@ -303,6 +303,7 @@ sub read_pidfile {
    open my $PIDFILE, "<", $file;
    my $ret = scalar <$PIDFILE>;
    close $PIDFILE;
+   chomp $ret;
    $ret
 }
 
