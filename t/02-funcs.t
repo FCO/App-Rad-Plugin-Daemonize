@@ -16,7 +16,7 @@ if($pid_on_file =~ /^(\d+)$/) {
    is($1, $$);
 }
 chomp(my $ret = $c->read_pidfile);
-is($c->read_pidfile, $$ . $/);
+is($c->read_pidfile, $$);
 
 ok($c->write_pidfile(my $filename = tmpnam));
 open $FILE, "<", $filename || die "couldn't open file $filename";
@@ -25,7 +25,7 @@ close $FILE;
 if($pid_on_file =~ /^(\d+)$/){
    is($1, $$);
 }
-is($c->read_pidfile($filename), $$ . $/);
+is($c->read_pidfile($filename), $$);
 
 ok($c->is_running);
 
