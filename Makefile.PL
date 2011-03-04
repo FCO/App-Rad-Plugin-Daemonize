@@ -13,7 +13,7 @@ WriteMakefile(
     PL_FILES            => {},
     PREREQ_PM => {
         'Test::More'       => 0,
-        'App::Rad'         => '1.04',
+        'App::Rad'         => '1.05_01',
         'File::Temp'       => 0,
         'App::Rad::Tester' => 0,
     },
